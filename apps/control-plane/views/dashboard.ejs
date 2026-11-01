@@ -1,0 +1,79 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= title %></title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo"></span>
+        <div>
+          <h1>Adaptive Socket Balancer</h1>
+          <p>live control plane</p>
+        </div>
+      </div>
+      <div class="active-strategy">
+        <span class="label">Active strategy</span>
+        <strong id="active-strategy">--</strong>
+      </div>
+      <div class="meta">
+        <div><span class="label">Workload</span><b id="workload">--</b></div>
+        <div><span class="label">Uptime</span><b id="uptime">00:00:00</b></div>
+        <div><span class="label">Mode</span><b id="mode">--</b></div>
+        <div><span class="label">Clients</span><b id="clients">0</b></div>
+      </div>
+      <a class="nav" href="/benchmark">Benchmark</a>
+      <div class="statuses" id="statuses"></div>
+    </header>
+
+    <section class="controls">
+      <span class="label">Load generator</span>
+      <button data-profile="chat">Run chat load</button>
+      <button data-profile="image">Run image load</button>
+      <button data-profile="video">Run video load</button>
+      <button data-profile="mixed">Run mixed load</button>
+      <button id="stop" class="stop">Stop</button>
+      <span class="load-status" id="load-status">idle</span>
+    </section>
+
+    <section class="grid strategies" id="strategies"></section>
+
+    <section class="grid servers" id="servers"></section>
+
+    <section class="grid charts">
+      <article class="card chart">
+        <h3>Requests per second</h3>
+        <div class="canvas-wrap"><canvas id="chart-rate"></canvas></div>
+      </article>
+      <article class="card chart">
+        <h3>p95 latency (ms)</h3>
+        <div class="canvas-wrap"><canvas id="chart-latency"></canvas></div>
+      </article>
+      <article class="card chart">
+        <h3>Load per server by strategy</h3>
+        <div class="canvas-wrap"><canvas id="chart-load"></canvas></div>
+      </article>
+    </section>
+
+    <section class="card log">
+      <h3>Decision log</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Time</th><th>Workload</th><th>Strategy</th><th>Reason</th><th>Previous reward</th></tr>
+          </thead>
+          <tbody id="decisions"></tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="/js/dashboard.js"></script>
+</body>
+</html>

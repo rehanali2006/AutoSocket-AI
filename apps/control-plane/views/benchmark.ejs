@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta http-equiv="refresh" content="15">
+  <title><%= title %> | Adaptive Socket Balancer</title>
+  <link rel="stylesheet" href="/css/dashboard.css">
+</head>
+<body>
+  <div class="page">
+    <header class="topbar">
+      <div class="brand">
+        <span class="logo"></span>
+        <div>
+          <h1>Benchmark</h1>
+          <p>measured from MongoDB, nothing is hardcoded</p>
+        </div>
+      </div>
+      <a class="nav" href="/">Back to dashboard</a>
+    </header>
+
+    <section class="card log">
+      <h3>Strategy comparison</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Strategy</th><th>Load seconds</th><th>Requests</th><th>Avg req/s</th><th>p95 (ms)</th><th>Error rate</th><th>Load std-dev</th>
+            </tr>
+          </thead>
+          <tbody>
+            <% rows.forEach(r => { %>
+              <tr>
+                <td class="strategy-cell"><%= r.label %></td>
+                <td class="mono"><%= r.windows %></td>
+                <td class="mono"><%= r.requests.toLocaleString() %></td>
+                <td class="mono <%= r.best.avgReqPerSec ? 'best' : '' %>"><%= r.avgReqPerSec === null ? '--' : r.avgReqPerSec.toFixed(2) %></td>
+                <td class="mono <%= r.best.p95 ? 'best' : '' %>"><%= r.p95 === null ? '--' : r.p95.toFixed(2) %></td>
+                <td class="mono <%= r.best.errorRate ? 'best' : '' %>"><%= r.errorRate === null ? '--' : (r.errorRate * 100).toFixed(3) + '%' %></td>
+                <td class="mono <%= r.best.loadStd ? 'best' : '' %>"><%= r.loadStd === null ? '--' : r.loadStd.toFixed(2) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+      <p class="note">Req/s counts new connections and HTTP requests accepted by the workers, per second under load. Load std-dev is the standard deviation of connection counts across servers, averaged over load seconds. Highlighted cells are the best value in each column. Strategies are only comparable when they ran the same load profile.</p>
+    </section>
+
+    <section class="card log">
+      <h3>What the bandit has learned</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Workload class</th><th>Strategy</th><th>Windows tried</th><th>Mean reward</th></tr>
+          </thead>
+          <tbody>
+            <% if (!arms.length) { %>
+              <tr><td colspan="4" class="note">No bandit data yet. Run a load in adaptive mode.</td></tr>
+            <% } %>
+            <% arms.forEach(a => { %>
+              <tr>
+                <td><%= a.workloadClass %></td>
+                <td class="strategy-cell"><%= a.label %></td>
+                <td class="mono"><%= a.count %></td>
+                <td class="mono"><%= a.mean.toFixed(3) %></td>
+              </tr>
+            <% }) %>
+          </tbody>
+        </table>
+      </div>
+    </section>
+  </div>
+</body>
+</html>

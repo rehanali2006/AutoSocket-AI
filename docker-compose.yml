@@ -1,0 +1,97 @@
+x-app: &app
+  build: .
+  image: adaptive-socket-balancer:latest
+  env_file:
+    - .env
+  restart: unless-stopped
+  depends_on:
+    - nats
+
+services:
+  nats:
+    image: nats:2.10-alpine
+    command: ["-m", "${NATS_MONITOR_PORT}"]
+    ports:
+      - "${NATS_MONITOR_PORT}:${NATS_MONITOR_PORT}"
+    restart: unless-stopped
+
+  mongo:
+    image: mongo:7
+    volumes:
+      - mongo-data:/data/db
+    restart: unless-stopped
+
+  worker1:
+    <<: *app
+    command: node apps/worker/server.js
+    cpus: ${WORKER1_CPUS}
+    environment:
+      NODE_ID: worker1
+      CPU_LIMIT: ${WORKER1_CPUS}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$${WORKER_PORT}/health >/dev/null || exit 1"]
+      interval: 10s
+      start_period: 15s
+
+  worker2:
+    <<: *app
+    command: node apps/worker/server.js
+    cpus: ${WORKER2_CPUS}
+    environment:
+      NODE_ID: worker2
+      CPU_LIMIT: ${WORKER2_CPUS}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$${WORKER_PORT}/health >/dev/null || exit 1"]
+      interval: 10s
+      start_period: 15s
+
+  worker3:
+    <<: *app
+    command: node apps/worker/server.js
+    cpus: ${WORKER3_CPUS}
+    environment:
+      NODE_ID: worker3
+      CPU_LIMIT: ${WORKER3_CPUS}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$${WORKER_PORT}/health >/dev/null || exit 1"]
+      interval: 10s
+      start_period: 15s
+
+  gateway:
+    <<: *app
+    command: node apps/gateway/server.js
+    depends_on:
+      - nats
+      - worker1
+      - worker2
+      - worker3
+    ports:
+      - "${GATEWAY_PORT}:${GATEWAY_PORT}"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$${GATEWAY_PORT}/health >/dev/null || exit 1"]
+      interval: 10s
+      start_period: 15s
+
+  control-plane:
+    <<: *app
+    command: node apps/control-plane/server.js
+    depends_on:
+      - nats
+      - mongo
+    ports:
+      - "${CONTROL_PLANE_PORT}:${CONTROL_PLANE_PORT}"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1:$${CONTROL_PLANE_PORT}/health >/dev/null || exit 1"]
+      interval: 10s
+      start_period: 20s
+
+  loadgen:
+    <<: *app
+    command: node apps/loadgen/server.js
+    depends_on:
+      - gateway
+    ports:
+      - "${LOADGEN_PORT}:${LOADGEN_PORT}"
+
+volumes:
+  mongo-data:
